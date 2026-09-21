@@ -54,7 +54,7 @@ async def add_redeem_code(client, message):
         await message.reply_text("<b>♻ Usage:\n\n➩ <code>/add_redeem 1min 1</code>,\n➩ <code>/add_redeem 1hour 10</code>,\n➩ <code>/add_redeem 1day 5</code></b>")
 
 
-@Client.on_message(filters.command("redeem"))
+#@Client.on_message(filters.command("redeem"))
 async def redeem_code(client, message):
     user_id = message.from_user.id
     if len(message.command) == 2:
