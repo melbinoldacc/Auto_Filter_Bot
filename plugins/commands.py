@@ -839,7 +839,7 @@ async def deletemultiplefiles(bot, message):
     )
 
 
-@Client.on_callback_query(filters.regex("topsearch"))
+#@Client.on_callback_query(filters.regex("topsearch"))
 async def topsearch_callback(client, callback_query):
     def is_alphanumeric(string):
         return bool(re.match('^[a-zA-Z0-9 ]*$', string))
