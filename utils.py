@@ -205,23 +205,34 @@ async def is_check_admin(bot, chat_id, user_id):
 
 async def users_broadcast(bot, user_id, message, is_pin):
     try:
+        # Plain text message
+        if message.text:
+            m = await bot.send_message(
+                chat_id=user_id,
+                text=message.text,
+                entities=message.entities
+            )
 
-        m = await bot.copy_message(
-    chat_id=user_id,
-    from_chat_id=message.chat.id,
-    message_id=message.id
-)
+        # Captioned media
+        elif message.caption:
+            m = await bot.copy_message(
+                chat_id=user_id,
+                from_chat_id=message.chat.id,
+                message_id=message.id
+            )
+
+        # Other media/messages
+        else:
+            m = await bot.copy_message(
+                chat_id=user_id,
+                from_chat_id=message.chat.id,
+                message_id=message.id
+            )
 
         if is_pin:
-
             try:
-                await m.pin(
-                    both_sides=True
-                )
-
+                await m.pin(both_sides=True)
             except Exception as e:
-                # Message was delivered successfully.
-                # Pinning failure should not mark broadcast as failed.
                 logger.warning(
                     f"Could not pin message for user {user_id}: {e}"
                 )
@@ -229,69 +240,32 @@ async def users_broadcast(bot, user_id, message, is_pin):
         return True, "Success"
 
     except FloodWait as e:
-
-        # Support different Pyrogram FloodWait attributes.
-        wait_time = getattr(
-            e,
-            "value",
-            getattr(e, "x", 1)
-        )
-
+        wait_time = getattr(e, "value", getattr(e, "x", 1))
         logger.warning(
-            f"FloodWait for user {user_id}. "
-            f"Sleeping for {wait_time} seconds."
+            f"FloodWait for user {user_id}. Sleeping for {wait_time} seconds."
         )
-
-        await asyncio.sleep(
-            wait_time
-        )
-
-        # IMPORTANT:
-        # Pass is_pin again when retrying.
+        await asyncio.sleep(wait_time)
         return await users_broadcast(bot, user_id, message, is_pin)
 
     except InputUserDeactivated:
-
-        await db.delete_user(
-            int(user_id)
-        )
-
-        logging.info(
-            f"{user_id}-Removed from Database, since deleted account."
-        )
-
+        await db.delete_user(int(user_id))
+        logging.info(f"{user_id}-Removed from Database, since deleted account.")
         return False, "Deleted"
 
     except UserIsBlocked:
-
-        logging.info(
-            f"{user_id} -Blocked the bot."
-        )
-
-        await db.delete_user(
-            int(user_id)
-        )
-
+        logging.info(f"{user_id} -Blocked the bot.")
+        await db.delete_user(user_id)
         return False, "Blocked"
 
     except PeerIdInvalid:
-
-        await db.delete_user(
-            int(user_id)
-        )
-
-        logging.info(
-            f"{user_id} - PeerIdInvalid"
-        )
-
+        await db.delete_user(int(user_id))
+        logging.info(f"{user_id} - PeerIdInvalid")
         return False, "Error"
 
-    except Exception as e:
-
-        logging.warning(
-            f"Users broadcast error for {user_id}: {e}"
+    except Exception:
+        logging.exception(
+            f"Users broadcast error for {user_id}"
         )
-
         return False, "Error"
 
 
