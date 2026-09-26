@@ -1266,6 +1266,39 @@ def clean_filename(file_name):
 
     return file_name
 
+def clean_search_text(text):
+    """
+    Clean search text before searching files.
+    """
+    if not text:
+        return ""
+
+    text = str(text).strip()
+
+    # Remove common file extensions
+    text = re.sub(
+        r'\.(mkv|mp4|avi|mov|webm|flv|wmv|m4v|ts)$',
+        '',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # Replace separators with spaces
+    text = re.sub(
+        r'[._\-]+',
+        ' ',
+        text
+    )
+
+    # Remove extra spaces
+    text = re.sub(
+        r'\s+',
+        ' ',
+        text
+    ).strip()
+
+    return text
+
 
 # ============================================================
 # GET SIZE
