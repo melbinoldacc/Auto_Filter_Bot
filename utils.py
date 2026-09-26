@@ -203,12 +203,14 @@ async def is_check_admin(bot, chat_id, user_id):
 # USERS BROADCAST
 # ============================================================
 
-async def users_broadcast(user_id, message, is_pin):
+async def users_broadcast(bot, user_id, message, is_pin):
     try:
 
-        m = await message.copy(
-            chat_id=user_id
-        )
+        m = await bot.copy_message(
+    chat_id=user_id,
+    from_chat_id=message.chat.id,
+    message_id=message.id
+)
 
         if is_pin:
 
@@ -246,11 +248,7 @@ async def users_broadcast(user_id, message, is_pin):
 
         # IMPORTANT:
         # Pass is_pin again when retrying.
-        return await users_broadcast(
-            user_id,
-            message,
-            is_pin
-        )
+        return await users_broadcast(bot, user_id, message, is_pin)
 
     except InputUserDeactivated:
 
