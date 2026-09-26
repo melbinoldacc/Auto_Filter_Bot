@@ -2549,7 +2549,7 @@ async def get_cap(
                             f"⚜️ ᴘᴏᴡᴇʀᴇᴅ ʙʏ :⚡ "
                             f"{query.message.chat.title}"
                             f"or temp.B_LINK "
-                            f"or 'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
+                            f"or {'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
                         )
 
                     else:
@@ -2567,7 +2567,7 @@ async def get_cap(
                             f"⚜️ ᴘᴏᴡᴇʀᴇᴅ ʙʏ :⚡ "
                             f"{query.message.chat.title "
                             f"or temp.B_LINK "
-                            f"or 'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
+                            f"or {'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
                         )
 
                     cap += (
@@ -2606,7 +2606,7 @@ async def get_cap(
                     f"⚜️ ᴘᴏᴡᴇʀᴇᴅ ʙʏ : ⚡ "
                     f"{query.message.chat.title "
                     f"or temp.B_LINK "
-                    f"or 'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
+                    f"or {'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
                 )
 
             else:
@@ -2624,7 +2624,7 @@ async def get_cap(
                     f"⚜️ ᴘᴏᴡᴇʀᴇᴅ ʙʏ : ⚡ "
                     f"{query.message.chat.title "
                     f"or temp.B_LINK "
-                    f"or 'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
+                    f"or {'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
                 )
 
             cap += (
