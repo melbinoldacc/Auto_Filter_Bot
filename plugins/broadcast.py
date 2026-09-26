@@ -326,6 +326,7 @@ async def broadcast_pin_callback(bot, query):
                 try:
 
                     _, result = await users_broadcast(
+                        bot,
                         int(user["id"]),
                         b_msg,
                         is_pin
