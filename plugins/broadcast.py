@@ -31,7 +31,7 @@ async def broadcast_users(bot, message):
     if lock.locked():
         return await message.reply("⚠️ Another broadcast is in progress. Please wait...")
    ##code changed
-   admin_id = message.from_user.id 
+admin_id = message.from_user.id 
 BROADCAST_WAITING.add(admin_id) 
 try: 
     ask = await message.reply(
