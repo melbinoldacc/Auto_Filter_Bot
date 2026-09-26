@@ -12,6 +12,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyb
 
 logger = logging.getLogger(__name__)
 lock = asyncio.Lock()
+BROADCAST_WAITING = set()
 
 @Client.on_callback_query(filters.regex(r'^broadcast_cancel'))
 async def broadcast_cancel(bot, query):
@@ -29,20 +30,39 @@ async def broadcast_users(bot, message):
         return await message.reply("<b>Reply to a message to broadcast.</b>",parse_mode=enums.ParseMode.HTML)
     if lock.locked():
         return await message.reply("⚠️ Another broadcast is in progress. Please wait...")
+   ##code changed
+    admin_id = message.from_user.id
+BROADCAST_WAITING.add(admin_id)
+
+try:
     ask = await message.reply(
         "<b>Do you want to pin this message in users?</b>",
-        reply_markup=ReplyKeyboardMarkup([["Yes", "No"]], one_time_keyboard=True, resize_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup(
+            [["Yes", "No"]],
+            one_time_keyboard=True,
+            resize_keyboard=True
+        )
     )
+
     try:
-        dreamxbotz_user_response = await bot.listen(chat_id=message.chat.id, user_id=message.from_user.id, timeout=60)
+        dreamxbotz_user_response = await bot.listen(
+            chat_id=message.chat.id,
+            user_id=admin_id,
+            timeout=60
+        )
     except asyncio.TimeoutError:
         await ask.delete()
         return await message.reply("❌ Timed out. Broadcast cancelled.")
+
     await ask.delete()
+
     if dreamxbotz_user_response.text not in ("Yes", "No"):
         return await message.reply("❌ Invalid input. Broadcast cancelled.")
 
     is_pin = dreamxbotz_user_response.text == "Yes"
+
+finally:
+    BROADCAST_WAITING.discard(admin_id)
     b_msg = message.reply_to_message
     users = [user async for user in await db.get_all_users()]
     total_users = len(users)
@@ -110,20 +130,40 @@ async def broadcast_users(bot, message):
 async def broadcast_group(bot, message):
     if not message.reply_to_message:
         return await message.reply("<b>Reply to a message to group broadcast.</b>", parse_mode=enums.ParseMode.HTML)
+
+##code changed
+admin_id = message.from_user.id
+BROADCAST_WAITING.add(admin_id)
+
+try:
     ask = await message.reply(
         "<b>Do you want to pin this message in groups?</b>",
-        reply_markup=ReplyKeyboardMarkup([["Yes", "No"]], one_time_keyboard=True, resize_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup(
+            [["Yes", "No"]],
+            one_time_keyboard=True,
+            resize_keyboard=True
+        )
     )
+
     try:
-        dreamxbotz_user_response = await bot.listen(chat_id=message.chat.id, user_id=message.from_user.id, timeout=60)
+        dreamxbotz_user_response = await bot.listen(
+            chat_id=message.chat.id,
+            user_id=admin_id,
+            timeout=60
+        )
     except asyncio.TimeoutError:
         await ask.delete()
         return await message.reply("❌ Timed out. Broadcast cancelled.")
+
     await ask.delete()
+
     if dreamxbotz_user_response.text not in ("Yes", "No"):
         return await message.reply("❌ Invalid input. Broadcast cancelled.")
 
     is_pin = dreamxbotz_user_response.text == "Yes"
+
+finally:
+    BROADCAST_WAITING.discard(admin_id)
     b_msg = message.reply_to_message
     chats = await db.get_all_chats()
     total_chats = await db.total_chat_count()
