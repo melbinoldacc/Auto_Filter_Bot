@@ -82,6 +82,10 @@ async def give_filter(client, message):
 
 @Client.on_message(filters.private & filters.text & filters.incoming & ~filters.regex(r"^/") & ~filters.regex(r"(https?://)?(t\.me|telegram\.me|telegram\.dog)/"))
 async def pm_text(bot, message):
+    from plugins.broadcast import BROADCAST_WAITING
+
+    if message.from_user.id in BROADCAST_WAITING:
+        return
     bot_id = bot.me.id
     content = message.text
     user = message.from_user.first_name
