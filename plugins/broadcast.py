@@ -31,54 +31,54 @@ async def broadcast_users(bot, message):
     if lock.locked():
         return await message.reply("⚠️ Another broadcast is in progress. Please wait...")
    ##code changed
-    admin_id = message.from_user.id
-BROADCAST_WAITING.add(admin_id)
-
-try:
+   admin_id = message.from_user.id 
+BROADCAST_WAITING.add(admin_id) 
+try: 
     ask = await message.reply(
         "<b>Do you want to pin this message in users?</b>",
         reply_markup=ReplyKeyboardMarkup(
-            [["Yes", "No"]],
-            one_time_keyboard=True,
-            resize_keyboard=True
-        )
-    )
-
-    try:
+            [["Yes", "No"]], 
+            one_time_keyboard=True, resize_keyboard=True
+        ) 
+    ) 
+    try: 
         dreamxbotz_user_response = await bot.listen(
             chat_id=message.chat.id,
             user_id=admin_id,
-            timeout=60
-        )
+            timeout=60 
+        ) 
     except asyncio.TimeoutError:
         await ask.delete()
-        return await message.reply("❌ Timed out. Broadcast cancelled.")
-
-    await ask.delete()
-
-    if dreamxbotz_user_response.text not in ("Yes", "No"):
-        return await message.reply("❌ Invalid input. Broadcast cancelled.")
-
-    is_pin = dreamxbotz_user_response.text == "Yes"
-
-finally:
-    BROADCAST_WAITING.discard(admin_id)
-    b_msg = message.reply_to_message
-    users = [user async for user in await db.get_all_users()]
-    total_users = len(users)
-    dreamxbotz_status_msg = await message.reply_text("📤 <b>Broadcasting your message...</b>")
-    success = blocked = deleted = failed = 0
-    start_time = time.time()
-    cancelled = False
-
-    async def send(user):
-        try:
-            _, result = await users_broadcast(int(user["id"]), b_msg, is_pin)
-            return result
-        except Exception:
-            logging.exception(f"Error sending broadcast to {user['id']}")
-            return "Error"
-
+        return await message.reply(
+            "❌ Timed out. Broadcast cancelled." 
+        ) 
+        await ask.delete() 
+        
+        if dreamxbotz_user_response.text not in ("Yes", "No"): 
+            return await message.reply( 
+                "❌ Invalid input. Broadcast cancelled." 
+            ) 
+            is_pin = dreamxbotz_user_response.text == "Yes" 
+    finally: 
+        BROADCAST_WAITING.discard(admin_id) 
+        b_msg = message.reply_to_message 
+        users = [user async for user in await db.get_all_users()] 
+        total_users = len(users)
+        dreamxbotz_status_msg = await message.reply_text(
+            "📤 <b>Broadcasting your message...</b>" 
+        ) 
+        success = blocked = deleted = failed = 0
+        start_time = time.time() 
+        cancelled = False 
+        
+        async def send(user):
+            try:
+                _, result = await users_broadcast(int(user["id"]), b_msg, is_pin)
+                return result 
+            except Exception: 
+                logging.exception(f"Error sending broadcast to {user['id']}") 
+                return "Error" 
+            
     async with lock:
         for i in range(0, total_users, 100):
             if temp.B_USERS_CANCEL:
@@ -132,46 +132,54 @@ async def broadcast_group(bot, message):
         return await message.reply("<b>Reply to a message to group broadcast.</b>", parse_mode=enums.ParseMode.HTML)
 
 ##code changed
-admin_id = message.from_user.id
-BROADCAST_WAITING.add(admin_id)
-
-try:
+admin_id = message.from_user.id 
+BROADCAST_WAITING.add(admin_id) 
+try: 
     ask = await message.reply(
-        "<b>Do you want to pin this message in groups?</b>",
+        "<b>Do you want to pin this message in users?</b>",
         reply_markup=ReplyKeyboardMarkup(
-            [["Yes", "No"]],
-            one_time_keyboard=True,
-            resize_keyboard=True
-        )
-    )
-
-    try:
+            [["Yes", "No"]], 
+            one_time_keyboard=True, resize_keyboard=True
+        ) 
+    ) 
+    try: 
         dreamxbotz_user_response = await bot.listen(
             chat_id=message.chat.id,
             user_id=admin_id,
-            timeout=60
-        )
+            timeout=60 
+        ) 
     except asyncio.TimeoutError:
         await ask.delete()
-        return await message.reply("❌ Timed out. Broadcast cancelled.")
-
-    await ask.delete()
-
-    if dreamxbotz_user_response.text not in ("Yes", "No"):
-        return await message.reply("❌ Invalid input. Broadcast cancelled.")
-
-    is_pin = dreamxbotz_user_response.text == "Yes"
-
-finally:
-    BROADCAST_WAITING.discard(admin_id)
-    b_msg = message.reply_to_message
-    chats = await db.get_all_chats()
-    total_chats = await db.total_chat_count()
-    dreamxbotz_status_msg = await message.reply_text("📤 <b>Broadcasting your message to groups...</b>")
-    start_time = time.time()
-    done = success = failed = 0
-    cancelled = False
-
+        return await message.reply(
+            "❌ Timed out. Broadcast cancelled." 
+        ) 
+        await ask.delete() 
+        
+        if dreamxbotz_user_response.text not in ("Yes", "No"): 
+            return await message.reply( 
+                "❌ Invalid input. Broadcast cancelled." 
+            ) 
+            is_pin = dreamxbotz_user_response.text == "Yes" 
+    finally: 
+        BROADCAST_WAITING.discard(admin_id) 
+        b_msg = message.reply_to_message 
+        users = [user async for user in await db.get_all_users()] 
+        total_users = len(users)
+        dreamxbotz_status_msg = await message.reply_text(
+            "📤 <b>Broadcasting your message...</b>" 
+        ) 
+        success = blocked = deleted = failed = 0
+        start_time = time.time() 
+        cancelled = False 
+        
+        async def send(user):
+            try:
+                _, result = await users_broadcast(int(user["id"]), b_msg, is_pin)
+                return result 
+            except Exception: 
+                logging.exception(f"Error sending broadcast to {user['id']}") 
+                return "Error" 
+                
     async with lock:
         async for chat in chats:
             time_taken = get_readable_time(time.time() - start_time)
