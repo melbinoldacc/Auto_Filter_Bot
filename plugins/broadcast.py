@@ -24,69 +24,102 @@ async def broadcast_cancel(bot, query):
         temp.B_GROUPS_CANCEL = True
         await query.message.edit("🛑 ᴛʀʏɪɴɢ ᴛᴏ ᴄᴀɴᴄᴇʟ ɢʀᴏᴜᴘꜱ ʙʀᴏᴀᴅᴄᴀꜱᴛɪɴɢ...")
 
+
 @Client.on_message(filters.command("broadcast") & filters.user(ADMINS) & filters.private)
 async def broadcast_users(bot, message):
     if not message.reply_to_message:
-        return await message.reply("<b>Reply to a message to broadcast.</b>",parse_mode=enums.ParseMode.HTML)
-    if lock.locked():
-        return await message.reply("⚠️ Another broadcast is in progress. Please wait...")
-   ##code changed
-admin_id = message.from_user.id 
-BROADCAST_WAITING.add(admin_id) 
-try: 
-    ask = await message.reply(
-        "<b>Do you want to pin this message in users?</b>",
-        reply_markup=ReplyKeyboardMarkup(
-            [["Yes", "No"]], 
-            one_time_keyboard=True, resize_keyboard=True
-        ) 
-    ) 
-    try: 
-        dreamxbotz_user_response = await bot.listen(
-            chat_id=message.chat.id,
-            user_id=admin_id,
-            timeout=60 
-        ) 
-    except asyncio.TimeoutError:
-        await ask.delete()
         return await message.reply(
-            "❌ Timed out. Broadcast cancelled." 
-        ) 
-        await ask.delete() 
-        
-        if dreamxbotz_user_response.text not in ("Yes", "No"): 
-            return await message.reply( 
-                "❌ Invalid input. Broadcast cancelled." 
-            ) 
-            is_pin = dreamxbotz_user_response.text == "Yes" 
-    finally: 
-        BROADCAST_WAITING.discard(admin_id) 
-        b_msg = message.reply_to_message 
-        users = [user async for user in await db.get_all_users()] 
-        total_users = len(users)
-        dreamxbotz_status_msg = await message.reply_text(
-            "📤 <b>Broadcasting your message...</b>" 
-        ) 
-        success = blocked = deleted = failed = 0
-        start_time = time.time() 
-        cancelled = False 
-        
-        async def send(user):
-            try:
-                _, result = await users_broadcast(int(user["id"]), b_msg, is_pin)
-                return result 
-            except Exception: 
-                logging.exception(f"Error sending broadcast to {user['id']}") 
-                return "Error" 
-            
+            "<b>Reply to a message to broadcast.</b>",
+            parse_mode=enums.ParseMode.HTML
+        )
+
+    if lock.locked():
+        return await message.reply(
+            "⚠️ Another broadcast is in progress. Please wait..."
+        )
+
+    admin_id = message.from_user.id
+    BROADCAST_WAITING.add(admin_id)
+
+    try:
+        ask = await message.reply(
+            "<b>Do you want to pin this message in users?</b>",
+            reply_markup=ReplyKeyboardMarkup(
+                [["Yes", "No"]],
+                one_time_keyboard=True,
+                resize_keyboard=True
+            )
+        )
+
+        try:
+            dreamxbotz_user_response = await bot.listen(
+                chat_id=message.chat.id,
+                user_id=admin_id,
+                timeout=60
+            )
+        except asyncio.TimeoutError:
+            await ask.delete()
+            return await message.reply(
+                "❌ Timed out. Broadcast cancelled."
+            )
+
+        await ask.delete()
+
+        if dreamxbotz_user_response.text not in ("Yes", "No"):
+            return await message.reply(
+                "❌ Invalid input. Broadcast cancelled."
+            )
+
+        is_pin = dreamxbotz_user_response.text == "Yes"
+
+    finally:
+        BROADCAST_WAITING.discard(admin_id)
+
+    b_msg = message.reply_to_message
+    users = [user async for user in await db.get_all_users()]
+    total_users = len(users)
+
+    dreamxbotz_status_msg = await message.reply_text(
+        "📤 <b>Broadcasting your message...</b>",
+        parse_mode=enums.ParseMode.HTML
+    )
+
+    success = 0
+    blocked = 0
+    deleted = 0
+    failed = 0
+
+    start_time = time.time()
+    cancelled = False
+
+    async def send(user):
+        try:
+            _, result = await users_broadcast(
+                int(user["id"]),
+                b_msg,
+                is_pin
+            )
+            return result
+
+        except Exception:
+            logging.exception(
+                f"Error sending broadcast to {user['id']}"
+            )
+            return "Error"
+
     async with lock:
         for i in range(0, total_users, 100):
+
             if temp.B_USERS_CANCEL:
                 temp.B_USERS_CANCEL = False
                 cancelled = True
                 break
+
             batch = users[i:i + 100]
-            results = await asyncio.gather(*[send(user) for user in batch])
+
+            results = await asyncio.gather(
+                *[send(user) for user in batch]
+            )
 
             for res in results:
                 if res == "Success":
@@ -99,21 +132,35 @@ try:
                     failed += 1
 
             done = i + len(batch)
-            elapsed = get_readable_time(time.time() - start_time)
+            elapsed = get_readable_time(
+                time.time() - start_time
+            )
+
             await dreamxbotz_status_msg.edit(
-                f"📣 <b>Broadcast Progress....:</b>\n\n"
+                f"📣 <b>Broadcast Progress:</b>\n\n"
                 f"👥 Total: <code>{total_users}</code>\n"
                 f"✅ Done: <code>{done}</code>\n"
                 f"📬 Success: <code>{success}</code>\n"
                 f"⛔ Blocked: <code>{blocked}</code>\n"
                 f"🗑️ Deleted: <code>{deleted}</code>\n"
+                f"❌ Failed: <code>{failed}</code>\n"
                 f"⏱️ Time: {elapsed}",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ CANCEL", callback_data="broadcast_cancel#users")]
+                    [
+                        InlineKeyboardButton(
+                            "❌ CANCEL",
+                            callback_data="broadcast_cancel#users"
+                        )
+                    ]
                 ])
             )
+
             await asyncio.sleep(0.1)
-    elapsed = get_readable_time(time.time() - start_time)
+
+    elapsed = get_readable_time(
+        time.time() - start_time
+    )
+
     final_status = (
         f"{'❌ <b>Broadcast Cancelled.</b>' if cancelled else '✅ <b>Broadcast Completed.</b>'}\n\n"
         f"🕒 Time: {elapsed}\n"
@@ -123,108 +170,172 @@ try:
         f"🗑️ Deleted: <code>{deleted}</code>\n"
         f"❌ Failed: <code>{failed}</code>"
     )
-    await dreamxbotz_status_msg.edit(final_status)
+
+    await dreamxbotz_status_msg.edit(
+        final_status,
+        reply_markup=None
+    )
 
 
 @Client.on_message(filters.command("grp_broadcast") & filters.user(ADMINS) & filters.private)
 async def broadcast_group(bot, message):
     if not message.reply_to_message:
-        return await message.reply("<b>Reply to a message to group broadcast.</b>", parse_mode=enums.ParseMode.HTML)
-
-##code changed
-admin_id = message.from_user.id 
-BROADCAST_WAITING.add(admin_id) 
-try: 
-    ask = await message.reply(
-        "<b>Do you want to pin this message in users?</b>",
-        reply_markup=ReplyKeyboardMarkup(
-            [["Yes", "No"]], 
-            one_time_keyboard=True, resize_keyboard=True
-        ) 
-    ) 
-    try: 
-        dreamxbotz_user_response = await bot.listen(
-            chat_id=message.chat.id,
-            user_id=admin_id,
-            timeout=60 
-        ) 
-    except asyncio.TimeoutError:
-        await ask.delete()
         return await message.reply(
-            "❌ Timed out. Broadcast cancelled." 
-        ) 
-        await ask.delete() 
-        
-        if dreamxbotz_user_response.text not in ("Yes", "No"): 
-            return await message.reply( 
-                "❌ Invalid input. Broadcast cancelled." 
-            ) 
-            is_pin = dreamxbotz_user_response.text == "Yes" 
-    finally: 
-        BROADCAST_WAITING.discard(admin_id) 
-        b_msg = message.reply_to_message 
-        users = [user async for user in await db.get_all_users()] 
-        total_users = len(users)
-        dreamxbotz_status_msg = await message.reply_text(
-            "📤 <b>Broadcasting your message...</b>" 
-        ) 
-        success = blocked = deleted = failed = 0
-        start_time = time.time() 
-        cancelled = False 
-        
-        async def send(user):
-            try:
-                _, result = await users_broadcast(int(user["id"]), b_msg, is_pin)
-                return result 
-            except Exception: 
-                logging.exception(f"Error sending broadcast to {user['id']}") 
-                return "Error" 
-                
+            "<b>Reply to a message to group broadcast.</b>",
+            parse_mode=enums.ParseMode.HTML
+        )
+
+    if lock.locked():
+        return await message.reply(
+            "⚠️ Another broadcast is in progress. Please wait..."
+        )
+
+    admin_id = message.from_user.id
+    BROADCAST_WAITING.add(admin_id)
+
+    try:
+        ask = await message.reply(
+            "<b>Do you want to pin this message in groups?</b>",
+            reply_markup=ReplyKeyboardMarkup(
+                [["Yes", "No"]],
+                one_time_keyboard=True,
+                resize_keyboard=True
+            )
+        )
+
+        try:
+            dreamxbotz_user_response = await bot.listen(
+                chat_id=message.chat.id,
+                user_id=admin_id,
+                timeout=60
+            )
+        except asyncio.TimeoutError:
+            await ask.delete()
+            return await message.reply(
+                "❌ Timed out. Group broadcast cancelled."
+            )
+
+        await ask.delete()
+
+        if dreamxbotz_user_response.text not in ("Yes", "No"):
+            return await message.reply(
+                "❌ Invalid input. Group broadcast cancelled."
+            )
+
+        is_pin = dreamxbotz_user_response.text == "Yes"
+
+    finally:
+        BROADCAST_WAITING.discard(admin_id)
+
+    b_msg = message.reply_to_message
+
+    chats = [chat async for chat in await db.get_all_chats()]
+    total_chats = len(chats)
+
+    if total_chats == 0:
+        return await message.reply(
+            "❌ No groups found for broadcast."
+        )
+
+    dreamxbotz_status_msg = await message.reply_text(
+        "📤 <b>Broadcasting your message to groups...</b>",
+        parse_mode=enums.ParseMode.HTML
+    )
+
+    success = 0
+    failed = 0
+    done = 0
+    start_time = time.time()
+    cancelled = False
+
     async with lock:
-        async for chat in chats:
-            time_taken = get_readable_time(time.time() - start_time)
+
+        for chat in chats:
+
             if temp.B_GROUPS_CANCEL:
                 temp.B_GROUPS_CANCEL = False
                 cancelled = True
                 break
+
             try:
-                sts = await groups_broadcast(int(chat['id']), b_msg, is_pin)
+                sts = await groups_broadcast(
+                    int(chat["id"]),
+                    b_msg,
+                    is_pin
+                )
+
             except Exception:
-                logging.exception(f"Error broadcasting to group {chat['id']}")
-                sts = 'Error'
+                logging.exception(
+                    f"Error broadcasting to group {chat['id']}"
+                )
+                sts = "Error"
+
             if sts == "Success":
                 success += 1
             else:
                 failed += 1
+
             done += 1
-            if done % 10 == 0:
-                btn = [[InlineKeyboardButton("❌ CANCEL", callback_data="broadcast_cancel#groups")]]
+
+            if done % 10 == 0 or done == total_chats:
+                time_taken = get_readable_time(
+                    time.time() - start_time
+                )
+
+                btn = [
+                    [
+                        InlineKeyboardButton(
+                            "❌ CANCEL",
+                            callback_data="broadcast_cancel#groups"
+                        )
+                    ]
+                ]
+
                 await dreamxbotz_status_msg.edit(
-                    f"📣 <b>Group broadcast progress:</b>\n\n"
+                    f"📣 <b>Group Broadcast Progress:</b>\n\n"
                     f"👥 Total Groups: <code>{total_chats}</code>\n"
                     f"✅ Completed: <code>{done} / {total_chats}</code>\n"
                     f"📬 Success: <code>{success}</code>\n"
-                    f"❌ Failed: <code>{failed}</code>",
+                    f"❌ Failed: <code>{failed}</code>\n"
+                    f"⏱️ Time: {time_taken}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
-    time_taken = get_readable_time(time.time() - start_time)
+
+    time_taken = get_readable_time(
+        time.time() - start_time
+    )
+
     dreamxbotz_text = (
-        f"{'❌ <b>Groups broadcast cancelled!</b>' if cancelled else '✅ <b>Group broadcast completed.</b>'}\n"
+        f"{'❌ <b>Groups broadcast cancelled!</b>' if cancelled else '✅ <b>Group broadcast completed.</b>'}\n\n"
         f"⏱️ Completed in {time_taken}\n\n"
         f"👥 Total Groups: <code>{total_chats}</code>\n"
         f"✅ Completed: <code>{done} / {total_chats}</code>\n"
         f"📬 Success: <code>{success}</code>\n"
         f"❌ Failed: <code>{failed}</code>"
     )
+
     try:
-        await dreamxbotz_status_msg.edit(dreamxbotz_text)
+        await dreamxbotz_status_msg.edit(
+            dreamxbotz_text,
+            reply_markup=None
+        )
+
     except MessageTooLong:
         with open("reason.txt", "w+") as outfile:
-            outfile.write(str(failed))
+            outfile.write(
+                f"Total Groups: {total_chats}\n"
+                f"Completed: {done}\n"
+                f"Success: {success}\n"
+                f"Failed: {failed}\n"
+            )
+
         await message.reply_document(
-            "reason.txt", caption=dreamxbotz_text
+            "reason.txt",
+            caption=dreamxbotz_text
         )
+
         os.remove("reason.txt")
+
 
 @Client.on_message(filters.command("clear_junk") & filters.user(ADMINS))
 async def remove_junkuser__db(bot, message):
