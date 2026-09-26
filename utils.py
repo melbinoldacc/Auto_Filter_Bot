@@ -2547,7 +2547,7 @@ async def get_cap(
                             f"📝 ʀᴇǫᴜᴇsᴛᴇᴅ ʙʏ : "
                             f"{query.from_user.mention}\n"
                             f"⚜️ ᴘᴏᴡᴇʀᴇᴅ ʙʏ :⚡ "
-                            f"{query.message.chat.title "
+                            f"{query.message.chat.title}"
                             f"or temp.B_LINK "
                             f"or 'ᴅʀᴇᴀᴍxʙᴏᴛᴢ'}\n</b>"
                         )
